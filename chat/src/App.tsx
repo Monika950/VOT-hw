@@ -1,21 +1,21 @@
 import React, { useState, useEffect } from 'react';
 import { socket } from './socket';
 
+interface HistoryMessage {
+  sender: string;
+  message: string;
+}
+
 const App: React.FC = () => {
-  const [isConnected, setIsConnected] = useState(socket.connected);
+ 
   const [connection, setConnection] = useState<string>('');
   const [messages, setMessages] = useState<string[]>([]);
   const [input, setInput] = useState<string>('');
-  const [room, setRoom] = useState<string>(''); 
+  const [room, setRoom] = useState<string>('');
 
   useEffect(() => {
     socket.on('connect', () => {
       setConnection(socket.id);
-      setIsConnected(true);
-    });
-
-    socket.on('disconnect', () => {
-      setIsConnected(false);
     });
 
     socket.on('receive-message', (message: string) => {
@@ -33,29 +33,20 @@ const App: React.FC = () => {
     if (input.trim()) {
       setMessages((prevMessages) => [...prevMessages, input]);
       socket.emit('send-message', input, room);
-      setInput(''); 
+      setInput('');
     }
   };
 
-  // const handleJoinRoom = () => {
-  //   if (room.trim()) {
-  //     socket.emit('join-room', room,message=>
-  //       setMessages((prevMessages) => [...prevMessages, message])
-  //     );
-      
-  //   }
-  // };
 
   const handleJoinRoom = () => {
     if (room.trim()) {
-      socket.emit('join-room', room, (joinMessage, history) => {
+      socket.emit('join-room', room, (joinMessage: string, history: HistoryMessage[]) => {
         setMessages(history.map((msg) => `${msg.sender}: ${msg.message}`));
-     
+
         setMessages((prevMessages) => [...prevMessages, joinMessage]);
       });
     }
   };
-  
 
   return (
     <div className="flex items-center justify-center min-h-screen bg-gray-100 p-4">
@@ -92,7 +83,7 @@ const App: React.FC = () => {
           <input
             type="text"
             value={room}
-            onChange={(e) => setRoom(e.target.value)} 
+            onChange={(e) => setRoom(e.target.value)}
             placeholder="Room"
             className="w-full px-3 py-2 border rounded focus:outline-none focus:ring focus:ring-blue-200"
           />
