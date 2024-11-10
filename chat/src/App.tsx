@@ -1,23 +1,52 @@
-// src/App.tsx
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
+import { io} from 'socket.io-client';
+
 
 const App: React.FC = () => {
   const [messages, setMessages] = useState<string[]>([]);
   const [input, setInput] = useState<string>('');
 
+  const [connection,setConnection] = useState<string>(''); 
+  
+  let socket;
+  
+  useEffect(() => {
+    // Initialize the socket connection
+    socket = io('http://localhost:3000'); // Replace with your server URL and port
+
+    // Set up the 'connect' event listener
+    socket.on('connect', () => {
+      setConnection(socket.id || ''); // Set the connection ID
+      socket.emit('custom-event', 10, "Hi", { a: "a" }); // Emit custom event with data
+    });
+
+    // Optional: Listen for incoming messages from the server
+    socket.on('message', (message: string) => {
+      setMessages((prevMessages) => [...prevMessages, message]);
+    });
+
+    // Clean up the socket connection on component unmount
+    return () => {
+      socket.disconnect();
+    };
+  }, []);
+  
+  
+
   const handleSend = () => {
     if (input.trim()) {
-      setMessages([...messages, input]);
+
+      setMessages((prevMessages) => [...prevMessages, input]);
       setInput('');
     }
   };
 
+
   return (
     <div className="flex items-center justify-center min-h-screen bg-gray-100 p-4">
       <div className="w-full max-w-md bg-white rounded-lg shadow-lg">
-        {/* Connection status */}
         <div className="px-4 py-2 bg-gray-200 text-gray-600 text-sm rounded-t-lg">
-          You have connected with id: <span className="font-semibold">4coXkc6h60c3iHB4AAAA</span>
+          You have connected with id: <span className="font-semibold">{connection}</span>
         </div>
 
         {/* Chat messages area */}
