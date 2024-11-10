@@ -1,6 +1,8 @@
+const {instrument} = require('@socket.io/admin-ui')
+
 const io = require('socket.io')(3000, {
     cors: {
-        origin: ['http://localhost:5173','http://localhost:3001'],
+        origin: ['http://localhost:5173','http://localhost:3001','https://admin.socket.io'],
         methods: ["GET", "POST"],
     },
 });
@@ -17,11 +19,10 @@ io.on("connection", socket => {
         }
     });
 
-    socket.on('join-room', room => {
+    socket.on('join-room', (room,cb) => {
         socket.join(room);
+        cb(`Joined ${room}`);
     });
 
-    // socket.on('disconnect', () => {
-    //     console.log('User disconnected:', socket.id);
-    // });
+   instrument(io, {auth:false});
 });

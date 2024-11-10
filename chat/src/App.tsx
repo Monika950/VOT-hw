@@ -39,8 +39,10 @@ const App: React.FC = () => {
 
   const handleJoinRoom = () => {
     if (room.trim()) {
-      socket.emit('join-room', room);
-      //setMessages([]);
+      socket.emit('join-room', room,message=>
+        setMessages((prevMessages) => [...prevMessages, message])
+      );
+      
     }
   };
 
