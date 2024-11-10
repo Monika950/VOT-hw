@@ -1,4 +1,22 @@
-const {instrument} = require('@socket.io/admin-ui')
+const mongoose = require('mongoose');
+
+mongoose.connect('mongodb://localhost:27017', {
+    useNewUrlParser: true,
+    useUnifiedTopology: true,
+})
+.then(() => console.log("Connected to MongoDB"))
+.catch(err => console.error("Could not connect to MongoDB", err));
+
+const messageSchema = new mongoose.Schema({
+    room: String,
+    message: String,
+    sender: String,
+    timestamp: { type: Date, default: Date.now }
+});
+
+const Message = mongoose.model('Message', messageSchema);
+
+
 
 const io = require('socket.io')(3000, {
     cors: {
@@ -10,19 +28,30 @@ const io = require('socket.io')(3000, {
 io.on("connection", socket => {
     console.log('A user connected with ID:', socket.id);
 
-    socket.on('send-message',(message,room)=>{
-        if(room === ''){
-            socket.broadcast.emit('receive-message',message);
-            console.log(message)
+    socket.on('join-room', async (room, cb) => {
+        socket.join(room);
+
+        const messages = await Message.find({ room }).sort({ timestamp: 1 });
+
+        cb(`Joined ${room}`, messages);
+    });
+
+    socket.on('send-message', async (message, room) => {
+        const newMessage = new Message({
+            room: room || 'global',
+            message: message,
+            sender: socket.id,
+        });
+
+        await newMessage.save();
+
+        if (room === '') {
+            socket.broadcast.emit('receive-message', message);
+            console.log(message);
         } else {
-            socket.to(room).emit('receive-message',message);
+            socket.to(room).emit('receive-message', message);
         }
     });
 
-    socket.on('join-room', (room,cb) => {
-        socket.join(room);
-        cb(`Joined ${room}`);
-    });
-
-   instrument(io, {auth:false});
+    //instrument(io, { auth: false });
 });

@@ -6,7 +6,7 @@ const App: React.FC = () => {
   const [connection, setConnection] = useState<string>('');
   const [messages, setMessages] = useState<string[]>([]);
   const [input, setInput] = useState<string>('');
-  const [room, setRoom] = useState<string>(''); // Added room state
+  const [room, setRoom] = useState<string>(''); 
 
   useEffect(() => {
     socket.on('connect', () => {
@@ -37,14 +37,25 @@ const App: React.FC = () => {
     }
   };
 
+  // const handleJoinRoom = () => {
+  //   if (room.trim()) {
+  //     socket.emit('join-room', room,message=>
+  //       setMessages((prevMessages) => [...prevMessages, message])
+  //     );
+      
+  //   }
+  // };
+
   const handleJoinRoom = () => {
     if (room.trim()) {
-      socket.emit('join-room', room,message=>
-        setMessages((prevMessages) => [...prevMessages, message])
-      );
-      
+      socket.emit('join-room', room, (joinMessage, history) => {
+        setMessages(history.map((msg) => `${msg.sender}: ${msg.message}`));
+     
+        setMessages((prevMessages) => [...prevMessages, joinMessage]);
+      });
     }
   };
+  
 
   return (
     <div className="flex items-center justify-center min-h-screen bg-gray-100 p-4">
